@@ -1,0 +1,56 @@
+version: '3'
+
+services:
+  db:
+    container_name: mysql_db
+    build: 
+      context: ./mysql
+      dockerfile: Dockerfile
+    image: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=desafio_docker_db
+    networks:
+      - network_desafio
+    ports:
+      - 3300:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$MYSQL_ROOT_PASSWORD"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  node:
+    container_name: node
+    volumes:
+      - ./node/src:/app/
+    build:
+      context: ./node
+      dockerfile: Dockerfile
+    image: desafio-docker-node
+    networks:
+      - network_desafio
+    depends_on:
+      db:
+        condition: service_healthy 
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "localhost:3000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  nginx:
+    container_name: nginx
+    build: 
+      context: ./nginx
+      dockerfile: Dockerfile
+    image: nginx:latest
+    ports:
+      - 8080:80
+    depends_on:
+      node:
+        condition: service_healthy 
+    networks:
+      - network_desafio
+  
+networks:
+  network_desafio:
+    driver: bridge
