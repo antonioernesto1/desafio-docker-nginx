@@ -23,6 +23,7 @@ services:
     container_name: node
     volumes:
       - ./node/src:/app/
+      - /app/node_modules
     build:
       context: ./node
       dockerfile: Dockerfile
